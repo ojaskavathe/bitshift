@@ -1,0 +1,118 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFID Reader and Writer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        section {
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        #scan-status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #read-output {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            min-height: 50px;
+        }
+    </style>
+    <script>
+        let scanInterval = null;
+        let scanFrequency = 0.1; // Fetch every 0.1 seconds
+
+        async function startScanning() {
+            const response = await fetch('/start_scan', { method: 'POST' });
+            const result = await response.json();
+            if (result.status === 'success') {
+                document.getElementById('scan-status').textContent = "Scanning started...";
+                scanInterval = setInterval(fetchScanData, 100); 
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function stopScanning() {
+            const response = await fetch('/stop_scan', { method: 'POST' });
+            const result = await response.json();
+            if (result.status === 'success') {
+                document.getElementById('scan-status').textContent = "Scanning stopped.";
+                clearInterval(scanInterval);
+                scanInterval = null;
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function fetchScanData() {
+            const response = await fetch('/get_scan');
+            const result = await response.json();
+            if (result.status === 'success') {
+                const data = result.data;
+                document.getElementById('read-output').innerHTML = `
+                    <strong>UID:</strong> ${data.uid.join(', ')}<br>
+                    <strong>Data:</strong> ${data.data}
+                `;
+            } else if (result.status === 'no_data') {
+                document.getElementById('read-output').textContent = "No data scanned yet.";
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function writeCard() {
+            const data = document.getElementById('write-data').value.trim();
+            if (data.length !== 32) {
+                alert("Data must be 32 hex characters (16 bytes).");
+                return;
+            }
+
+            // Validate hex characters
+            const hexRegex = /^[0-9A-Fa-f]+$/;
+            if (!hexRegex.test(data)) {
+                alert("Data must be valid hexadecimal characters.");
+                return;
+            }
+
+            const response = await fetch('/write', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: data })
+            });
+            const result = await response.json();
+            alert(result.message);
+        }
+    </script>
+</head>
+<body>
+    <h1>RFID Reader and Writer</h1>
+
+    <section>
+        <h2>Scanning Control</h2>
+        <button onclick="startScanning()">Start Scanning</button>
+        <button onclick="stopScanning()">Stop Scanning</button>
+        <p id="scan-status">Scanning not active.</p>
+        <div id="read-output">Scanned data will appear here...</div>
+    </section>
+
+    <section>
+        <h2>Write Data</h2>
+        <input type="text" id="write-data" placeholder="Enter 32 hex characters" style="width: 300px; padding: 8px;">
+        <button onclick="writeCard()">Write to Card</button>
+    </section>
+</body>
+</html>
