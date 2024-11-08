@@ -1,0 +1,79 @@
+<!-- templates/arp_spoofing.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARP Spoofing Configuration</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        section { margin-bottom: 30px; }
+        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+        #loading-text { font-weight: bold; color: #007bff; }
+    </style>
+    <script>
+        async function startArpSpoofing() {
+            const targetIp = new URLSearchParams(window.location.search).get('target_ip');
+            const attackerMac = document.getElementById('attacker-mac').value || null;
+            const gatewayMac = document.getElementById('gateway-mac').value || null;
+            const gatewayIp = document.getElementById('gateway-ip').value || null;
+            const targetMac = document.getElementById('target-mac').value || null;
+            const interval = parseFloat(document.getElementById('interval').value) || 1.0;
+            const disassociate = document.getElementById('disassociate').checked || false;
+            const ipForwarding = document.getElementById('ip-forwarding').checked || true;
+
+            const response = await fetch('/start_arp_spoofing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    target_ip: targetIp,
+                    attacker_mac: attackerMac,
+                    gateway_mac: gatewayMac,
+                    gateway_ip: gatewayIp,
+                    target_mac: targetMac,
+                    interval: interval,
+                    disassociate: disassociate,
+                    ipforward: ipForwarding
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert(`ARP spoofing started for IP: ${targetIp}`);
+            } else {
+                alert("Error starting ARP spoofing.");
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>ARP Spoofing Configuration</h1>
+
+    <section>
+        <label for="attacker-mac">Attacker MAC Address:</label>
+        <input type="text" id="attacker-mac" placeholder="XX:XX:XX:XX:XX:XX"><br>
+
+        <label for="gateway-mac">Gateway MAC Address:</label>
+        <input type="text" id="gateway-mac" placeholder="XX:XX:XX:XX:XX:XX"><br>
+
+        <label for="gateway-ip">Gateway IP Address:</label>
+        <input type="text" id="gateway-ip" placeholder="XX.XX.XX.XX"><br>
+
+        <label for="target-mac">Target MAC Address:</label>
+        <input type="text" id="target-mac" placeholder="XX:XX:XX:XX:XX:XX"><br>
+
+        <label for="interval">Interval (in seconds):</label>
+        <input type="number" id="interval" placeholder="1" step="0.1" min="0.1"><br>
+
+        <label for="disassociate">Disassociate (Y/N):</label>
+        <input type="checkbox" id="disassociate"><br>
+
+        <label for="ip-forwarding">Enable IP Forwarding:</label>
+        <input type="checkbox" id="ip-forwarding" checked><br>
+
+        <button onclick="startArpSpoofing()">Start ARP Spoofing</button>
+    </section>
+</body>
+</html>

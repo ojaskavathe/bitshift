@@ -1,0 +1,77 @@
+<!-- templates/network_scan.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        section { margin-bottom: 30px; }
+        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
+        #ip-info, #scan-results, #loading-text { margin-top: 20px; }
+        .result-item { margin-bottom: 10px; }
+        #loading-text { font-weight: bold; color: #007bff; }
+    </style>
+    <script>
+        async function loadIPInfo() {
+            const response = await fetch('/get_ip_info');
+            const result = await response.json();
+            document.getElementById('ip-info').innerHTML = `
+                <strong>Local IP:</strong> ${result.local_ip}<br>
+                <strong>Gateway:</strong> ${result.network_ip}
+            `;
+        }
+
+        async function scanNetwork() {
+            const scanButton = document.getElementById('scan-button');
+            scanButton.disabled = true;
+
+            document.getElementById('loading-text').style.display = 'block';
+            document.getElementById('scan-results').innerHTML = ''; // Clear previous results
+
+            const response = await fetch('/scan_network', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const result = await response.json();
+
+            document.getElementById('loading-text').style.display = 'none';
+            scanButton.disabled = false;
+
+            if (result.status === 'success') {
+                const scanResultsDiv = document.getElementById('scan-results');
+                scanResultsDiv.innerHTML = "<h3>Scan Results:</h3>";
+                for (const [ip, info] of Object.entries(result.data)) {
+                    scanResultsDiv.innerHTML += `
+                        <div class="result-item">
+                            <strong>IP:</strong> ${ip}<br>
+                            <strong>Hostname:</strong> ${info.hostname || "Unknown"}<br>
+                            <a href="/arp_spoofing?target_ip=${ip}">
+                                <button>Start ARP Spoofing for ${ip}</button>
+                            </a>
+                        </div>
+                    `;
+                }
+            } else {
+                alert("Error scanning the network.");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadIPInfo);
+    </script>
+</head>
+<body>
+    <h1>Network Scanner</h1>
+
+    <section>
+        <h2>IP Information</h2>
+        <div id="ip-info">Loading...</div>
+    </section>
+
+    <section>
+        <h2>Scan for Devices</h2>
+        <button id="scan-button" onclick="scanNetwork()">Start Network Scan</button>
+        <div id="loading-text" style="display: none;">Loading... Please wait while we scan the network...</div>
+        <div id="scan-results"></div>
+    </section>
+</body>
+</html>
