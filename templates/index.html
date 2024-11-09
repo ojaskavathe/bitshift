@@ -30,17 +30,43 @@
             background-color: #f9f9f9;
             min-height: 50px;
         }
+        #connection-status {
+            color: red;
+            font-weight: bold;
+        }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
     </style>
     <script>
         let scanInterval = null;
         let scanFrequency = 0.1; // Fetch every 0.1 seconds
+
+        async function checkConnection() {
+            const response = await fetch('/check_connection');
+            const result = await response.json();
+            const connectionStatus = document.getElementById('connection-status');
+            const controls = document.querySelectorAll(".control");
+
+            if (result.status === 'connected') {
+                connectionStatus.textContent = "Connected to PN532.";
+                connectionStatus.style.color = "green";
+                controls.forEach(control => control.classList.remove("disabled"));
+            } else {
+                connectionStatus.textContent = "PN532 not connected. Please check the hardware setup.";
+                connectionStatus.style.color = "red";
+                controls.forEach(control => control.classList.add("disabled"));
+                stopScanning(); // Ensure scanning stops if disconnected
+            }
+        }
 
         async function startScanning() {
             const response = await fetch('/start_scan', { method: 'POST' });
             const result = await response.json();
             if (result.status === 'success') {
                 document.getElementById('scan-status').textContent = "Scanning started...";
-                scanInterval = setInterval(fetchScanData, 100); 
+                scanInterval = setInterval(fetchScanData, 1000 * scanFrequency);
             } else {
                 alert(result.message);
             }
@@ -81,7 +107,6 @@
                 return;
             }
 
-            // Validate hex characters
             const hexRegex = /^[0-9A-Fa-f]+$/;
             if (!hexRegex.test(data)) {
                 alert("Data must be valid hexadecimal characters.");
@@ -96,23 +121,29 @@
             const result = await response.json();
             alert(result.message);
         }
+
+        // Check connection status every 2 seconds
+        setInterval(checkConnection, 2000);
+        window.onload = checkConnection;
     </script>
 </head>
 <body>
     <h1>RFID Reader and Writer</h1>
 
-    <section>
+    <p id="connection-status">Checking connection...</p>
+
+    <section class="control">
         <h2>Scanning Control</h2>
-        <button onclick="startScanning()">Start Scanning</button>
-        <button onclick="stopScanning()">Stop Scanning</button>
+        <button onclick="startScanning()" class="control">Start Scanning</button>
+        <button onclick="stopScanning()" class="control">Stop Scanning</button>
         <p id="scan-status">Scanning not active.</p>
         <div id="read-output">Scanned data will appear here...</div>
     </section>
 
-    <section>
+    <section class="control">
         <h2>Write Data</h2>
         <input type="text" id="write-data" placeholder="Enter 32 hex characters" style="width: 300px; padding: 8px;">
-        <button onclick="writeCard()">Write to Card</button>
+        <button onclick="writeCard()" class="control">Write to Card</button>
     </section>
 </body>
 </html>

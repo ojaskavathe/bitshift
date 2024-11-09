@@ -7,23 +7,39 @@ from arpspoof.arpspoof import Spoofer
 
 app = Flask(__name__)
 
+# RFID/NFC
 @app.route('/')
 def index():
+    if not rfid_handler.is_connected():
+        return render_template('index.html', error="PN532 not connected. Please check the hardware setup.")
     return render_template('index.html')
 
-#RFID
+@app.route('/check_connection', methods=['GET'])
+def check_connection():
+    if rfid_handler.is_connected():
+        return jsonify(status="connected")
+    else:
+        return jsonify(status="disconnected")
+
 @app.route('/start_scan', methods=['POST'])
 def start_scan():
+    if not rfid_handler.is_connected():
+        return jsonify({"status": "error", "message": "RFID scanner is not connected."})
     rfid_handler.start_scanning()
     return jsonify({"status": "success", "message": "Started scanning."})
 
 @app.route('/stop_scan', methods=['POST'])
 def stop_scan():
-    rfid_handler.stop_scanning()
-    return jsonify({"status": "success", "message": "Stopped scanning."})
+    if rfid_handler.is_connected():
+        rfid_handler.stop_scanning()
+        return jsonify({"status": "success", "message": "Stopped scanning."})
+    else:
+        return jsonify({"status": "error", "message": "RFID scanner is not connected."})
 
 @app.route('/get_scan', methods=['GET'])
 def get_scan():
+    if not rfid_handler.is_connected():
+        return jsonify({"status": "error", "message": "RFID scanner is not connected."})
     latest = rfid_handler.get_latest_scan()
     if latest:
         return jsonify({"status": "success", "data": latest})
@@ -32,12 +48,15 @@ def get_scan():
 
 @app.route('/write', methods=['POST'])
 def write_card():
+    if not rfid_handler.is_connected():
+        return jsonify({"status": "error", "message": "RFID scanner is not connected."})
     data_to_write = request.json.get("data")
     result = rfid_handler.authenticate_and_write(data_to_write, 4)
     if "successfully" in result:
         return jsonify({"status": "success", "message": result})
     else:
         return jsonify({"status": "error", "message": result})
+
 
 # NMAP
 @app.route('/network_scan')
