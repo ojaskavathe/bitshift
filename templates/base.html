@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        // IMPORTANT: set this in <HEAD> top before any other tag.
+        const setTheme = (theme) => {
+          theme ??= localStorage.theme || "light";
+          document.documentElement.dataset.theme = theme;
+          localStorage.theme = theme;
+        };
+        setTheme();
+      </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Bitshift{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <div class="container">
+      <div class="overlay" id="overlay"></div>
+      <button class="toggle-btn" id="toggleBtn" aria-label="Toggle Sidebar">
+        ☰
+      </button>
+
+      <nav class="sidebar" id="sidebar">
+        <h1>Bitshift</h2>
+        <ul>
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/rfid" class="nav-link">RFID</a></li>
+          <li><a href="/network_scan" class="nav-link">Network Scan</a></li>
+          <li><a href="/arp_spoofing" class="nav-link">ARP Spoofing</a></li>
+        </ul>
+        <button
+          class="dark-mode-toggle"
+          id="darkModeToggle"
+          aria-label="Toggle Dark Mode"
+        >
+          🌓
+        </button>
+      </nav>
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const toggleBtn = document.getElementById("toggleBtn");
+          const sidebar = document.getElementById("sidebar");
+          const overlay = document.getElementById("overlay");
+          const darkModeToggle = document.getElementById("darkModeToggle");
+          const navLinks = document.querySelectorAll(".nav-link");
+
+          function toggleSidebar() {
+            sidebar.classList.toggle("active");
+            overlay.classList.toggle("active");
+          }
+
+          function toggleDarkMode() {
+            theme = localStorage.theme === "dark" ? "light" : "dark";
+            updateDarkModeIcon();
+            setTheme(theme);
+          }
+
+          function updateDarkModeIcon() {
+            darkModeToggle.innerHTML = localStorage.theme === "dark"
+              ? `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`
+              : `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+          }
+
+          function setActivePage() {
+            const currentPath = window.location.pathname;
+            if (currentPath) {
+              navLinks[0].classList.add("active");
+            }
+            navLinks.forEach((link) => {
+              if (link.getAttribute("href") === currentPath) {
+                link.classList.add("active");
+              } else {
+                link.classList.remove("active");
+              }
+            });
+          }
+
+          updateDarkModeIcon();
+          setActivePage();
+
+          toggleBtn.addEventListener("click", toggleSidebar);
+          overlay.addEventListener("click", toggleSidebar);
+          darkModeToggle.addEventListener("click", toggleDarkMode);
+
+          // Update active page when hash changes
+          window.addEventListener("hashchange", setActivePage);
+
+          // Handle sidebar links
+          navLinks.forEach((link) => {
+            link.addEventListener("click", function (event) {
+              setActivePage();
+              if (window.innerWidth <= 768) {
+                toggleSidebar();
+              }
+            });
+          });
+        });
+      </script>
+
+</body>
+</html>
+

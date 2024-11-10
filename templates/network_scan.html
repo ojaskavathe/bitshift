@@ -1,77 +1,139 @@
 <!-- templates/network_scan.html -->
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Scanner</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        section { margin-bottom: 30px; }
-        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
-        #ip-info, #scan-results, #loading-text { margin-top: 20px; }
-        .result-item { margin-bottom: 10px; }
-        #loading-text { font-weight: bold; color: #007bff; }
-    </style>
-    <script>
-        async function loadIPInfo() {
-            const response = await fetch('/get_ip_info');
-            const result = await response.json();
-            document.getElementById('ip-info').innerHTML = `
-                <strong>Local IP:</strong> ${result.local_ip}<br>
-                <strong>Gateway:</strong> ${result.network_ip}
-            `;
-        }
+{% block title %}Network Scan{% endblock %}
 
-        async function scanNetwork() {
-            const scanButton = document.getElementById('scan-button');
-            scanButton.disabled = true;
+{% block head %} 
+<style>
+    section { margin-bottom: 30px; }
+    #ip-info, #scan-results, #loading-text { margin-top: 20px; }
+    .result-item { margin-bottom: 10px; }
+    #loading-text { font-weight: bold; color: #007bff; }
+    .ip-container {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .ip-title {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-bottom: 5px;
+    }
+    .port-entry {
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
 
-            document.getElementById('loading-text').style.display = 'block';
-            document.getElementById('scan-results').innerHTML = ''; // Clear previous results
+{% block content %}
+<h1>Network Scanner</h1>
 
-            const response = await fetch('/scan_network', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-            const result = await response.json();
+<section>
+    <h2>IP Information</h2>
+    <div id="ip-info">Loading...</div>
+</section>
 
-            document.getElementById('loading-text').style.display = 'none';
-            scanButton.disabled = false;
+<section>
+    <h2>Scan for Devices</h2>
+    <button id="scan-button" onclick="scanNetwork()">Start Network Scan</button>
+    <button id="scan-ports-button" onclick="scanPorts()">Scan Open Ports</button>
+    <div id="loading-text" style="display: none;">Loading... Please wait while we scan the network...</div>
+    <div id="scan-results"></div>
+</section>
+<script>
+    async function loadIPInfo() {
+        const response = await fetch('/get_ip_info');
+        const result = await response.json();
+        document.getElementById('ip-info').innerHTML = `
+            <strong>Local IP:</strong> ${result.local_ip}<br>
+            <strong>Gateway:</strong> ${result.network_ip}
+        `;
+    }
 
-            if (result.status === 'success') {
-                const scanResultsDiv = document.getElementById('scan-results');
-                scanResultsDiv.innerHTML = "<h3>Scan Results:</h3>";
-                for (const [ip, info] of Object.entries(result.data)) {
-                    scanResultsDiv.innerHTML += `
-                        <div class="result-item">
-                            <strong>IP:</strong> ${ip}<br>
-                            <strong>Hostname:</strong> ${info.hostname || "Unknown"}<br>
-                            <a href="/arp_spoofing?target_ip=${ip}">
-                                <button>Start ARP Spoofing for ${ip}</button>
-                            </a>
-                        </div>
-                    `;
-                }
-            } else {
-                alert("Error scanning the network.");
+    async function scanNetwork() {
+        const scanButton = document.getElementById('scan-button');
+        const scanPortsButton = document.getElementById('scan-ports-button');
+        scanButton.disabled = true;
+        scanPortsButton.disabled = true;
+
+        document.getElementById('loading-text').style.display = 'block';
+        document.getElementById('scan-results').innerHTML = ''; // Clear previous results
+
+        const response = await fetch('/scan_network', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const result = await response.json();
+
+        document.getElementById('loading-text').style.display = 'none';
+        scanButton.disabled = false;
+        scanPortsButton.disabled = false;
+
+        if (result.status === 'success') {
+            const scanResultsDiv = document.getElementById('scan-results');
+            scanResultsDiv.innerHTML = "<h3>Scan Results:</h3>";
+            for (const [ip, info] of Object.entries(result.data)) {
+                scanResultsDiv.innerHTML += `
+                    <div class="result-item">
+                        <strong>IP:</strong> ${ip}<br>
+                        <strong>Hostname:</strong> ${info.hostname || "Unknown"}<br>
+                        <a href="/arp_spoofing?target_ip=${ip}">
+                            <button>Start ARP Spoofing for ${ip}</button>
+                        </a>
+                    </div>
+                `;
             }
+        } else {
+            alert("Error scanning the network.");
         }
+    }
 
-        document.addEventListener("DOMContentLoaded", loadIPInfo);
-    </script>
-</head>
-<body>
-    <h1>Network Scanner</h1>
+    async function scanPorts() {
+        const scanButton = document.getElementById('scan-button');
+        const scanPortsButton = document.getElementById('scan-ports-button');
+        scanButton.disabled = true;
+        scanPortsButton.disabled = true;
 
-    <section>
-        <h2>IP Information</h2>
-        <div id="ip-info">Loading...</div>
-    </section>
+        document.getElementById('loading-text').style.display = 'block';
+        document.getElementById('scan-results').innerHTML = ''; // Clear previous results
 
-    <section>
-        <h2>Scan for Devices</h2>
-        <button id="scan-button" onclick="scanNetwork()">Start Network Scan</button>
-        <div id="loading-text" style="display: none;">Loading... Please wait while we scan the network...</div>
-        <div id="scan-results"></div>
-    </section>
-</body>
-</html>
+        const response = await fetch('/scan_open_ports', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const result = await response.json();
+
+        document.getElementById('loading-text').style.display = 'none';
+        scanButton.disabled = false;
+        scanPortsButton.disabled = false;
+
+        if (result.status === 'success') {
+	    const container = document.getElementById('scan-results');
+
+	    const openPorts = result.data;
+	    console.log(result.data);
+            for (const ip in openPorts) {
+              const ipContainer = document.createElement('div');
+              ipContainer.className = 'ip-container';
+
+              const ipTitle = document.createElement('div');
+              ipTitle.className = 'ip-title';
+              ipTitle.textContent = `IP Address: ${ip}`;
+              ipContainer.appendChild(ipTitle);
+
+              openPorts[ip].forEach(({ port, name }) => {
+                const portEntry = document.createElement('div');
+                portEntry.className = 'port-entry';
+                portEntry.textContent = `Port: ${port}`;
+                const portEntry2 = document.createElement('div');
+                portEntry2.textContent = `Service: ${name}`;
+                ipContainer.appendChild(portEntry2);
+              });
+
+              container.appendChild(ipContainer);
+            } 
+	} else {
+            alert("Error scanning for ports the network.");
+        }
+    }
+    document.addEventListener("DOMContentLoaded", loadIPInfo);
+</script>
+{% endblock %}

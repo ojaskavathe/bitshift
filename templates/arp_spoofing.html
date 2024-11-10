@@ -1,28 +1,205 @@
-<!-- templates/arp_spoofing.html -->
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARP Spoofing Configuration</title>
+{% block title %}ARP Spoofing{% endblock %}
+
+{% block head %}
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        section { margin-bottom: 30px; }
-        button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
-        #loading-text { font-weight: bold; color: #007bff; }
+        .arp-page {
+	    display: flex;
+	}
+        .arp-form {
+            max-width: 400px;
+	    margin-right: 40px;
+        }
+
+	@media (max-width: 768px) {
+            .arp-page {
+	        display: flex;
+		flex-direction: column;
+		justify-content: center;
+	    }
+            .arp-form {
+    	        margin-right: 0;
+            }
+	}
+
+
+        section {
+            margin-top: 20px;
+        }
+
+        label {
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="checkbox"] {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-top: 4px;
+            margin-right: 10px;
+        }
+
+        input[type="number"] {
+	    margin-top: 10px;
+            max-width: 150px;
+        }
+
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-row input {
+            width: 50%;
+        }
+
+        button {
+	    margin-bottom: 10px;
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #status {
+            font-weight: bold;
+            color: #007bff;
+            text-align: center;
+            display: none;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+        }
     </style>
+    <script></script>
+{% endblock %}
+
+{% block content %}
+    <div class="arp-page">
+        <section class="arp-form">
+	    <h1>ARP Spoofing Configuration</h1>
+            <div class="input-container">
+                <label for="target-ip">Target IP:</label>
+                <input type="text" id="target-ip" placeholder="XX:XX:XX:XX">
+
+                <label for="attacker-mac">Attacker MAC Address:</label>
+                <input type="text" id="attacker-mac" placeholder="XX:XX:XX:XX:XX:XX">
+
+                <label for="gateway-mac">Gateway MAC Address:</label>
+                <input type="text" id="gateway-mac" placeholder="XX:XX:XX:XX:XX:XX">
+
+                <label for="gateway-ip">Gateway IP Address:</label>
+                <input type="text" id="gateway-ip" placeholder="XX.XX.XX.XX">
+
+                <label for="target-mac">Target MAC Address:</label>
+                <input type="text" id="target-mac" placeholder="XX:XX:XX:XX:XX:XX">
+
+                <div class="form-row">
+                    <div>
+                        <label for="interval">Interval (in seconds):</label>
+                        <input type="number" id="interval" placeholder="1" step="0.1" min="0.1">
+                    </div>
+
+                    <div>
+                        <label for="disassociate">Disassociate (Y/N):</label>
+                        <input type="checkbox" id="disassociate">
+                    </div>
+                </div>
+
+                <div class="checkbox-label">
+                    <input type="checkbox" id="ip-forwarding" checked>
+                    <label for="ip-forwarding">Enable IP Forwarding</label>
+                </div>
+            </div>
+
+            <button id="start-button" onclick="startArpSpoofing()">Start ARP Spoofing</button>
+            <button id="stop-button" onclick="stopArpSpoofing()" disabled>Stop ARP Spoofing</button>
+
+            <div id="status">Loading... Please wait while ARP spoofing is running...</div>
+        </section>
+	<section id="visited-ips">
+            <h3>Visited IPs:</h3>
+            <div id="visited-ip-list"></div>
+	</section>
+    </div>
+
     <script>
+        const targetIpURL = new URLSearchParams(window.location.search).get('target_ip');
+	if (targetIpURL) {
+	  document.getElementById('target-ip').value = targetIpURL;
+	}
+
+	const visitedIPsDiv = document.getElementById('visited-ip-list');
+	
+        function updateStatus(isRunning) {
+            const statusText = document.getElementById('status');
+            const startButton = document.getElementById('start-button');
+            const stopButton = document.getElementById('stop-button');
+
+            if (isRunning) {
+                statusText.textContent = "ARP Spoofing is currently running.";
+                statusText.className = 'running';
+                startButton.disabled = true;
+                stopButton.disabled = false;
+		clearInterval(ipFetchInterval);
+		startFetchingIPs();
+            } else {
+                statusText.textContent = "ARP Spoofing is stopped.";
+                statusText.className = 'stopped';
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        }
+
         async function startArpSpoofing() {
-            const targetIp = new URLSearchParams(window.location.search).get('target_ip');
+            const targetIp = document.getElementById('target-ip').value || null;
             const attackerMac = document.getElementById('attacker-mac').value || null;
             const gatewayMac = document.getElementById('gateway-mac').value || null;
             const gatewayIp = document.getElementById('gateway-ip').value || null;
             const targetMac = document.getElementById('target-mac').value || null;
             const interval = parseFloat(document.getElementById('interval').value) || 1.0;
             const disassociate = document.getElementById('disassociate').checked || false;
-            const ipForwarding = document.getElementById('ip-forwarding').checked || true;
+            const ipForwarding = document.getElementById('ip-forwarding').checked || false;
 
+	    if (!targetIp) {
+		alert("No Target IP set!");
+		return;
+            }
             const response = await fetch('/start_arp_spoofing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -41,39 +218,57 @@
             const result = await response.json();
 
             if (result.status === 'success') {
-                alert(`ARP spoofing started for IP: ${targetIp}`);
+                updateStatus(true);
+		startFetchingIPs();
             } else {
                 alert("Error starting ARP spoofing.");
             }
         }
+
+        async function stopArpSpoofing() {
+            const response = await fetch('/stop_arp_spoofing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+		clearInterval(ipFetchInterval);
+                updateStatus(false);
+            } else {
+                alert('Error stopping ARP spoofing.');
+            }
+        }
+
+        async function checkStatus() {
+            const response = await fetch('/current_status', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+            updateStatus(result.isRunning);
+        }
+
+        document.addEventListener('DOMContentLoaded', checkStatus);
+    
+        let ipFetchInterval;
+        function startFetchingIPs() {
+            ipFetchInterval = setInterval(async () => {
+                const response = await fetch('/visited_ips');
+                const ips = await response.json();
+                visitedIPsDiv.innerHTML = ips.map(ip => {
+                    const timestamp = new Date().toLocaleTimeString();
+                    const ipLink = `https://whatismyipaddress.com/ip/${ip}`;
+                    return `
+                        <div class="visited-ip">
+                            <span><a href="${ipLink}" target="_blank">${ip}</a></span>
+                            <span class="timestamp">(${timestamp})</span>
+                        </div>
+                    `;
+                }).join('');
+            }, 2000); // Update every 2 seconds
+        }
     </script>
-</head>
-<body>
-    <h1>ARP Spoofing Configuration</h1>
-
-    <section>
-        <label for="attacker-mac">Attacker MAC Address:</label>
-        <input type="text" id="attacker-mac" placeholder="XX:XX:XX:XX:XX:XX"><br>
-
-        <label for="gateway-mac">Gateway MAC Address:</label>
-        <input type="text" id="gateway-mac" placeholder="XX:XX:XX:XX:XX:XX"><br>
-
-        <label for="gateway-ip">Gateway IP Address:</label>
-        <input type="text" id="gateway-ip" placeholder="XX.XX.XX.XX"><br>
-
-        <label for="target-mac">Target MAC Address:</label>
-        <input type="text" id="target-mac" placeholder="XX:XX:XX:XX:XX:XX"><br>
-
-        <label for="interval">Interval (in seconds):</label>
-        <input type="number" id="interval" placeholder="1" step="0.1" min="0.1"><br>
-
-        <label for="disassociate">Disassociate (Y/N):</label>
-        <input type="checkbox" id="disassociate"><br>
-
-        <label for="ip-forwarding">Enable IP Forwarding:</label>
-        <input type="checkbox" id="ip-forwarding" checked><br>
-
-        <button onclick="startArpSpoofing()">Start ARP Spoofing</button>
-    </section>
-</body>
-</html>
+{% endblock %}

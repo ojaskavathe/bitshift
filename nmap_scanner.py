@@ -4,6 +4,7 @@ import nmap3
 import socket
 import fcntl
 import struct
+import json
 
 interface = "wlan0"
 subnet_mask = "24"
@@ -21,7 +22,7 @@ def get_network_ip():
 def scan_network(ip_range=None):
     ip_range = ip_range or get_network_ip() + "/" + subnet_mask
     nmap = nmap3.NmapHostDiscovery()
-    results = nmap.nmap_no_portscan(ip_range)
+    results = nmap.nmap_portscan_only(ip_range)
     
     # Remove non-IP keys
     for key in ["runtime", "stats", "task_results"]:
@@ -30,12 +31,39 @@ def scan_network(ip_range=None):
     # Filter active hosts
     active_hosts = {}
     for ip, info in results.items():
-        if info["state"]["state"] == "up":
-            hostname = None
-            if "hostname" in info and len(info["hostname"]) > 0:
-                hostname = info["hostname"][0]["name"]
+        if "state" in info and info["state"].get("state") == "up":
+            if "hostname" in info and info["hostname"]:
+                hostname = info["hostname"][0].get("name", "Unknown")
+            else:
+                hostname = "Unknown"
             active_hosts[ip] = {
-                "hostname": hostname if hostname else "Unknown"
+                "hostname": hostname
             }
-    
+
     return active_hosts
+
+def scan_open_ports(ip_range=None):
+    ip_range = get_network_ip() + "/" + subnet_mask
+    print(ip_range)
+    nmap = nmap3.Nmap() 
+    scan_results = nmap.scan_top_ports(ip_range)
+
+    open_ports_info = {}
+
+    for ip, data in scan_results.items():
+        if isinstance(data, dict):
+            open_ports = []
+
+            for port_info in data.get('ports', []):
+                if port_info['state'] == 'open':
+                    open_ports.append({
+                        'port': port_info['portid'],
+                        'name': port_info['service']['name']
+                    })
+
+            if open_ports:
+                open_ports_info[ip] = open_ports
+        else:
+            print(f"Warning: Scan result for IP {ip} is in an unexpected format.")
+
+    return open_ports_info
