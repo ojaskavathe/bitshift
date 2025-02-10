@@ -12,3 +12,6 @@ a thing to break into stuff
 8. `sudo ./setup-hostapd.sh`
 9. `sudo ./setup-eviltwin.sh`
 10. restart
+
+# i2c
+`sudo raspi-config` -> enable i2c interface

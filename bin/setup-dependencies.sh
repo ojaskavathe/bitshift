@@ -6,5 +6,5 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 echo "Installing Dependencies & enabling apache2..."
-sudo apt install -y macchanger dnsmasq apache2 php nmap i2c-tools python3-pip
+sudo apt install -y macchanger dnsmasq apache2 php nmap i2c-tools python3-pip tshark
 sudo systemctl enable apache2

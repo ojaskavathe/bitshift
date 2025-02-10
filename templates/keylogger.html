@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+.data-container {
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.data-item {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+  animation: fadeIn 0.5s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#status {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  display: none;
+}
+.connected {
+  background-color: #d4edda;
+  color: #155724;
+}
+.disconnected {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="status">Connection Status</div>
+  <div class="data-container">
+    <h2>Received Data</h2>
+      <div id="data-list"></div>
+    </div>
+
+  <script>
+    let lastDataLength = 0;
+
+    function createDataItem(data) {
+      const div = document.createElement('div');
+      div.className = 'data-item';
+      div.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      return div;
+    }
+
+    function updateStatus(connected) {
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      if (connected) {
+        status.textContent = 'Connected';
+        status.className = 'connected';
+      } else {
+        status.textContent = 'Disconnected';
+        status.className = 'disconnected';
+      }
+    }
+
+    function fetchData() {
+      fetch('/get_data')
+        .then(response => response.json())
+        .then(data => {
+          updateStatus(true);
+          const dataList = document.getElementById('data-list');
+          
+          // Only update if we have new data
+          if (data.length > lastDataLength) {
+            // Add only new items
+            for (let i = lastDataLength; i < data.length; i++) {
+              dataList.appendChild(createDataItem(data[i]));
+            }
+            lastDataLength = data.length;
+          }
+
+          // If list is empty, show message
+          if (data.length === 0) {
+            dataList.innerHTML = '<p>No data received yet.</p>';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          updateStatus(false);
+        });
+    }
+
+    // Initial load
+    fetchData();
+
+    // Poll for updates every second
+    setInterval(fetchData, 1000);
+  </script>
+{% endblock %}
+
