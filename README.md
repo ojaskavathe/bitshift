@@ -31,6 +31,8 @@ BitShift is a sophisticated penetration testing toolkit designed for educational
 - **⌨️ Keylogger Integration** - Keystroke monitoring capabilities
 - **📊 Real-time System Monitoring** - CPU, memory, and disk usage tracking
 - **🎭 Evil Twin Attack Setup** - Rogue access point creation
+- **📶 Fake Access Point** - Deceptive WiFi network creation
+- **🎣 Phishing Credential Capture** - Automated credential harvesting
 
 ## 📱 Screenshots & Features
 
@@ -66,6 +68,14 @@ BitShift is a sophisticated penetration testing toolkit designed for educational
 ![Keylogger](Media/Screenshots/keylogger.png)
 *Real-time keystroke monitoring and data collection*
 
+### 📶 Fake Access Point Setup
+![Fake Access Point](Media/Screenshots/fake_access_point.png)
+*Deceptive WiFi network creation and management interface*
+
+### 🎣 Phishing Credential Capture
+![Phishing Credentials](Media/Screenshots/phishing_credentials.png)
+*Automated credential harvesting from connected devices*
+
 ## 🛠️ Hardware Requirements
 
 - **Raspberry Pi Zero 2W** - Main computing platform
@@ -73,6 +83,25 @@ BitShift is a sophisticated penetration testing toolkit designed for educational
 - **MicroSD Card** (16GB+ recommended)
 - **Power Supply** (5V/2.5A recommended)
 - **Network Connectivity** (WiFi/Ethernet)
+
+## 🔌 Hardware Assembly
+
+### Pin Diagram
+![Pin Diagram](Media/pin_diagram.png)
+*Complete wiring diagram for connecting PN532 RFID sensor to Raspberry Pi Zero 2W*
+
+### Connection Guide
+| PN532 Pin | Raspberry Pi Pin | Function |
+|-----------|------------------|----------|
+| VCC | 3.3V (Pin 1) | Power Supply |
+| GND | GND (Pin 6) | Ground |
+| SDA | GPIO 2 (Pin 3) | I2C Data Line |
+| SCL | GPIO 3 (Pin 5) | I2C Clock Line |
+
+**⚠️ Important Notes:**
+- Ensure proper voltage levels (3.3V only)
+- Double-check all connections before powering on
+- Use appropriate jumper wires for secure connections
 
 ## 📋 Prerequisites
 
