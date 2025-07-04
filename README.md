@@ -1,5 +1,5 @@
 # bitshift
-a thing to break into stuff
+a thing to break into stuff nicely.
 
 # on fresh image
 1. `sudo apt update && sudo apt install git`
