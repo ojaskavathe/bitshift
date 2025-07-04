@@ -1,4 +1,4 @@
-# 🚀 BitShift - Advanced Penetration Testing Toolkit
+# 🚀 BitShift - The Security Professional's Toolkit
 
 > **Final Year College Project** - A comprehensive cybersecurity toolkit built on Raspberry Pi Zero 2W with PN532 RFID Sensor
 
@@ -7,7 +7,7 @@
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-Zero%202W-red.svg)](https://www.raspberrypi.org/products/raspberry-pi-zero-2-w/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 📸 Final Appearance
+## 📸 Bitshift
 
 ![BitShift Final Look](Media/final_look.jpg)
 
