@@ -70,10 +70,12 @@ BitShift is a sophisticated penetration testing toolkit designed for educational
 
 ### 📶 Fake Access Point Setup
 ![Fake Access Point](Media/Screenshots/fake_access_point.png)
+
 *Deceptive WiFi network creation and management interface*
 
 ### 🎣 Phishing Credential Capture
 ![Phishing Credentials](Media/Screenshots/phishing_credentials.png)
+
 *Automated credential harvesting from connected devices*
 
 ## 🛠️ Hardware Requirements
@@ -88,6 +90,7 @@ BitShift is a sophisticated penetration testing toolkit designed for educational
 
 ### Pin Diagram
 ![Pin Diagram](Media/pin_diagram.png)
+
 *Complete wiring diagram for connecting PN532 RFID sensor to Raspberry Pi Zero 2W*
 
 ### Connection Guide
