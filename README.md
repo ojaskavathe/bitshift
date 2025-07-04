@@ -96,10 +96,10 @@ BitShift is a sophisticated penetration testing toolkit designed for educational
 ### Connection Guide
 | PN532 Pin | Raspberry Pi Pin | Function |
 |-----------|------------------|----------|
-| VCC | 3.3V (Pin 1) | Power Supply |
-| GND | GND (Pin 6) | Ground |
-| SDA | GPIO 2 (Pin 3) | I2C Data Line |
-| SCL | GPIO 3 (Pin 5) | I2C Clock Line |
+| VCC | 3.3V | Power Supply |
+| GND | GND | Ground |
+| SDA | GPIO 2 | I2C Data Line |
+| SCL | GPIO 3 | I2C Clock Line |
 
 **⚠️ Important Notes:**
 - Ensure proper voltage levels (3.3V only)
@@ -181,7 +181,7 @@ python app.py
 
 ### Accessing the Web Interface
 1. Connect to the BitShift WiFi network
-2. Open your browser and navigate to: `http://192.168.4.1`
+2. Open your browser and navigate to: `http://<raspi ip address>:<flask port>`
 3. Access the intuitive web dashboard
 
 ## 📚 Documentation
